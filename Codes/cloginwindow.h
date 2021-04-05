@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #ifndef CLOGINWINDOW_H
@@ -18,6 +18,7 @@
 #include <QFile>
 #include <QHostAddress>
 #include <QMessageBox>
+#include <QRegExpValidator>
 #include <QPalette>
 #include <QString>
 #include <QStringList>
@@ -47,24 +48,22 @@ protected:
 private:
     Ui::CLoginWindow *ui;
 
-    const QString m_fileCode = "#APQA";
-    const QString m_path_users_dir = QCoreApplication::applicationDirPath() + "/users/";
-    const QString m_path_users_enc = QCoreApplication::applicationDirPath() + "/system/users/";
+    const QString m_fileHead = "#APQA";
+    const QString m_applicationDirPath = QCoreApplication::applicationDirPath();
+    const QString m_path_users_dir = m_applicationDirPath + "/users/";
+    const QString m_path_system_users_enc = m_applicationDirPath + "/system/users/";
 
-    QDir m_dirUsersEnc;
-
+    QDir m_userEncDir;
+    QStringList m_usersList;
     QTcpSocket *m_tcpSocket = nullptr;
-
-    QStringList m_listUsers;
 
     CEncrypt m_encrypt;
 
 private slots:
-    void checkLineEditInput(QLineEdit *lineEidt, CString::CStringModel model);
-    void clicked_PushButtonConnectServer(QTcpSocket::SocketState state);
-    void clicked_PushButtonRegisterAccount();
-    void clicked_PushButtonRetrievePassword();
-    void clicked_ToolButtonLogin(QTcpSocket::SocketState state);
+    void clickedPushButtonConnectServer(QTcpSocket::SocketState state);
+    void clickedPushButtonRegisterAccount();
+    void clickedPushButtonRetrievePassword();
+    void clickedToolButtonLogin(QTcpSocket::SocketState state);
 
 };
 

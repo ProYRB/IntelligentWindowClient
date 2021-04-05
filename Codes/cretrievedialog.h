@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #ifndef CRETRIEVEDIALOG_H
@@ -9,14 +9,15 @@
 #include "cstring.h"
 #include "cencrypt.h"
 
+#include <QCoreApplication>
+#include <QDataStream>
+#include <QDialog>
 #include <QDir>
 #include <QFile>
-#include <QDialog>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QRegExpValidator>
 #include <QStringList>
-#include <QDataStream>
-#include <QCoreApplication>
 
 namespace Ui {
 class CRetrieveDialog;

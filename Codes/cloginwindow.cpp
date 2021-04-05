@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #include "cloginwindow.h"
@@ -20,10 +20,10 @@ CLoginWindow::CLoginWindow(QWidget *parent)
 
 
     /** [FilesSystem] */
-    m_dirUsersEnc.setPath(m_path_users_enc);
-    if(!m_dirUsersEnc.exists())
+    m_userEncDir.setPath(m_path_system_users_enc);
+    if(!m_userEncDir.exists())
     {
-        m_dirUsersEnc.mkpath(m_path_users_enc);
+        m_userEncDir.mkpath(m_path_system_users_enc);
     }
     /* [FilesSystem] **/
 
@@ -40,14 +40,8 @@ CLoginWindow::CLoginWindow(QWidget *parent)
 
 
     /** [LineEdits] */
-    connect(ui->lineEditAccount, &QLineEdit::textChanged, [&]()
-    {
-        this->checkLineEditInput(ui->lineEditAccount, CString::Model_Account);
-    });
-    connect(ui->lineEditAccount, &QLineEdit::textChanged, [&]()
-    {
-        this->checkLineEditInput(ui->lineEditAccount, CString::Model_Password);
-    });
+    ui->lineEditAccount->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9]{0,20}"), this));            //用正则表达式来限制输入
+    ui->lineEditPassword->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9-@#&/*+]{0,20}"), this));    //用正则表达式来限制输入
     /* [LineEdits] **/
 
 
@@ -71,18 +65,18 @@ CLoginWindow::CLoginWindow(QWidget *parent)
     connect(ui->toolButtonLogin, &QToolButton::clicked, [&]()
     {
 //        this->clicked_ToolButtonLogin(m_tcpSocket->state());
-        this->clicked_ToolButtonLogin(QTcpSocket::SocketState::UnconnectedState);
+        this->clickedToolButtonLogin(QTcpSocket::SocketState::UnconnectedState);
     });
     /* [LoginButton] **/
 
 
     /** [RegisterAccount] */
-    connect(ui->pushButtonRegisterAccount, &QPushButton::clicked, this, &CLoginWindow::clicked_PushButtonRegisterAccount);
+    connect(ui->pushButtonRegisterAccount, &QPushButton::clicked, this, &CLoginWindow::clickedPushButtonRegisterAccount);
     /* [RegisterAccount] **/
 
 
     /** [RetrievePassword] */
-    connect(ui->pushButtonRetrievePassword, &QPushButton::clicked, this, &CLoginWindow::clicked_PushButtonRetrievePassword);
+    connect(ui->pushButtonRetrievePassword, &QPushButton::clicked, this, &CLoginWindow::clickedPushButtonRetrievePassword);
     /* [RetrievePassword] **/
 }
 
@@ -91,37 +85,7 @@ CLoginWindow::~CLoginWindow()
     delete ui;
 }
 
-void CLoginWindow::checkLineEditInput(QLineEdit *lineEidt, CString::CStringModel model)
-{
-    CString checkedInput(lineEidt->text());
-    if(checkedInput.CheckChar(checkedInput.GetStringSize() - 1, model) == CString::Error_CharOverRange)
-    {
-        if(checkedInput.DeleteChar(checkedInput.GetStringSize() - 1) == CString::Error_None)
-        {
-            lineEidt->setText(checkedInput.GetString());
-        }
-        else
-        {
-            lineEidt->clear();
-        }
-        switch(model)
-        {
-        case CString::Model_Account:
-        {
-            QMessageBox::warning(this, "提示", "账号只能包含阿拉伯数字和大小写字母！");
-            break;
-        }
-        case CString::Model_Password:
-        {
-            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-            break;
-        }
-        }
-
-    }
-}
-
-void CLoginWindow::clicked_PushButtonConnectServer(QTcpSocket::SocketState state)
+void CLoginWindow::clickedPushButtonConnectServer(QTcpSocket::SocketState state)
 {
     switch(state)
     {
@@ -143,7 +107,7 @@ void CLoginWindow::clicked_PushButtonConnectServer(QTcpSocket::SocketState state
     }
 }
 
-void CLoginWindow::clicked_PushButtonRegisterAccount()
+void CLoginWindow::clickedPushButtonRegisterAccount()
 {
     CRegisterDialog registerDialog;
     connect(&registerDialog, &CRegisterDialog::registered, [&](QString registerAccount, QString registerPassword)
@@ -154,13 +118,13 @@ void CLoginWindow::clicked_PushButtonRegisterAccount()
     registerDialog.exec();
 }
 
-void CLoginWindow::clicked_PushButtonRetrievePassword()
+void CLoginWindow::clickedPushButtonRetrievePassword()
 {
     CRetrieveDialog retrieveDialog;
     retrieveDialog.exec();
 }
 
-void CLoginWindow::clicked_ToolButtonLogin(QTcpSocket::SocketState state)
+void CLoginWindow::clickedToolButtonLogin(QTcpSocket::SocketState state)
 {
     QString editAccount = ui->lineEditAccount->text();
     QString editPassword = ui->lineEditPassword->text();
@@ -169,12 +133,11 @@ void CLoginWindow::clicked_ToolButtonLogin(QTcpSocket::SocketState state)
         QMessageBox::warning(this, "提示", "账号不能为空！");
         return;
     }
-    if(editPassword == "")
+    else if(editPassword == "")
     {
         QMessageBox::warning(this, "提示", "密码不能为空！");
         return;
     }
-
     switch(state)
     {
     default:
@@ -221,26 +184,26 @@ void CLoginWindow::clicked_ToolButtonLogin(QTcpSocket::SocketState state)
     }
     case QTcpSocket::SocketState::UnconnectedState:
     {
-        QFileInfoList usersFileInfoList = m_dirUsersEnc.entryInfoList(QDir::Files | QDir::CaseSensitive);     //过滤条件为只限文件并区分大小写
+        QFileInfoList usersFileInfoList = m_userEncDir.entryInfoList(QDir::Files | QDir::CaseSensitive);     //过滤条件为只限文件并区分大小写
         for (int i = 0; i < usersFileInfoList.size(); ++i)
         {
             QString suffix = usersFileInfoList[i].suffix();     //获取后缀名
             if (suffix == "enc")
             {
-                m_listUsers.append(usersFileInfoList[i].baseName());
+                m_usersList.append(usersFileInfoList[i].baseName());    //获取满足条件的文件名称(不包含后缀)
             }
         }
 
-        for(int i = 0; i < m_listUsers.size(); ++i)
+        for(int i = 0; i < m_usersList.size(); ++i)
         {
-            if(m_listUsers[i] == editAccount)
+            if(m_usersList[i] == editAccount)
             {
-                QString fileCode;
+                QString fileHead;
                 QByteArray account, password, question1, answer1, question2, answer2;
-                QFile file_user_enc(m_path_users_enc + m_listUsers[i] + ".enc");
+                QFile file_user_enc(m_path_system_users_enc + m_usersList[i] + ".enc");
                 QDataStream outputStream(&file_user_enc);
                 file_user_enc.open(QIODevice::ReadOnly);
-                outputStream >> fileCode >> account >> password >> question1 >> answer1 >> question2 >> answer2;
+                outputStream >> fileHead >> account >> password >> question1 >> answer1 >> question2 >> answer2;
                 file_user_enc.close();
                 if(editPassword == m_encrypt.XOR(password, CEncrypt::Model_XOR).data())
                 {

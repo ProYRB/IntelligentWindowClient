@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #include "cretrievedialog.h"
@@ -12,24 +12,11 @@ CRetrieveDialog::CRetrieveDialog(QWidget *parent) :
 {
     ui->setupUi(this);  //默认代码
 
-    /**************************************************
-     * 代码区块【输入框】【开始】
-     **/
 
-    connect(ui->lineEditAccount, &QLineEdit::textChanged, [&](const QString &lineEditString){
-        CString checkString(lineEditString);
-        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Account) == CString::Error_CharOverRange){
-            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-            {
-                ui->lineEditAccount->setText(checkString.GetString());
-            }
-            else
-            {
-                ui->lineEditAccount->clear();
-            }
-            QMessageBox::warning(this, "提示", "账号只能包含阿拉伯数字和大小写字母！");
-        }
-
+    /** [LineEdits] */
+    ui->lineEditAccount->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9]{0,20}"), this));    //用正则表达式来限制输入
+    connect(ui->lineEditAccount, &QLineEdit::textChanged, [&](const QString &lineEditString)
+    {
         QFile file_user_enc(m_path_users_enc + lineEditString + ".enc");
         if(file_user_enc.open(QIODevice::ReadOnly))
         {
@@ -52,16 +39,12 @@ CRetrieveDialog::CRetrieveDialog(QWidget *parent) :
             ui->lineEditSecretiveQuestion2->clear();
         }
     });
+    /* [LineEdits] **/
 
-    /**
-     * 代码区块【输入框】【结束】
-     **************************************************/
 
-    /**************************************************
-     * 代码区块【找回】【开始】
-     **/
-
-    connect(ui->toolButtonRetrieve, &QToolButton::clicked, [&](){
+    /** [Retrieve] */
+    connect(ui->toolButtonRetrieve, &QToolButton::clicked, [&]()
+    {
         if(isNetwork)
         {
             ;
@@ -90,12 +73,8 @@ CRetrieveDialog::CRetrieveDialog(QWidget *parent) :
             }
         }
     });
-
     connect(this, &CRetrieveDialog::retrieved, this, &CRetrieveDialog::clearLineEdits);
-
-    /**
-     * 代码区块【找回】【结束】
-     **************************************************/
+    /* [Retrieve] **/
 }
 
 CRetrieveDialog::~CRetrieveDialog()

@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #include "cgobangchessboard.h"
@@ -13,6 +13,16 @@ CGobangChessboard::CGobangChessboard(QWidget *parent)
     for(int i = 0; i < 15; ++i)
     {
         m_virtualChessboard[i] = new CGobangChessman[15];
+    }
+    for(int i = 0; i < 8; ++i)      //初始化棋盘的分数
+    {
+        for(int j = i; (-1 + i) < j && j < (15 - i); ++j)
+        {
+            for(int k = i; (-1 + i) < k && k < (15 - i); ++k)
+            {
+                m_virtualChessboard[j][k].addScore(1);
+            }
+        }
     }
     /* [InitializeVirtualChessboard] **/
 
@@ -34,36 +44,51 @@ CGobangChessboard::CGobangChessboard(QWidget *parent)
     /* [CheckWin] **/
 
 
-    /** [power] */
-    connect(this, &CGobangChessboard::humanPlayed, this, &CGobangChessboard::updateScore);
-    connect(this, &CGobangChessboard::aiPlayed, this, &CGobangChessboard::updateScore);
-    /* [power] **/
+    /** [Win] */
+    connect(this, &CGobangChessboard::win, [&](){ m_playerChessmanType = CGobangChessman::CChessmanType::Type_None; });
+    /* [Win] **/
+
+
+    /** [UpdateScore] */
+    connect(this, &CGobangChessboard::checked, this, &CGobangChessboard::updateScore);
+    /* [UpdateScore] **/
 
 
     /** [AI] */
-    connect(this, &CGobangChessboard::humanPlayed, this, &CGobangChessboard::ai);
+    connect(this, &CGobangChessboard::aiReady, this, &CGobangChessboard::ai);
     /* [AI] **/
 }
 
 void CGobangChessboard::restart()
 {
+//    qDebug() << "=====重新开始=====";
+
+
+    /** [InitializeVirtualChessboard] */
+    for(int i = 0; i < 15; ++i)      //初始化棋盘
+    {
+        for(int j = 0; j < 15; ++j)
+        {
+            m_virtualChessboard[i][j].restart();
+        }
+    }
+    for(int i = 0; i < 8; ++i)      //正态分布
+    {
+        for(int j = i; (-1 + i) < j && j < (15 - i); ++j)
+        {
+            for(int k = i; (-1 + i) < k && k < (15 - i); ++k)
+            {
+                m_virtualChessboard[j][k].addScore(1);
+            }
+        }
+    }
+    /* [InitializeVirtualChessboard] **/
+
     m_chessboardPositionIndexX = -1;
     m_chessboardPositionIndexY = -1;
 
     m_vectorPlayImagesHistory.clear();
     m_vectorPlayPositionsIndexHistory.clear();
-
-    for(int i = 0; i < 15; ++i)
-    {
-        delete[] m_virtualChessboard[i];
-    }
-    delete[] m_virtualChessboard;
-
-    m_virtualChessboard = (CGobangChessman **)new CGobangChessman*[15];
-    for(int i = 0; i < 15; ++i)
-    {
-        m_virtualChessboard[i] = new CGobangChessman[15];
-    }
 
     m_playerChessmanType = CGobangChessman::CChessmanType::Type_Black;
 
@@ -72,9 +97,9 @@ void CGobangChessboard::restart()
 
 void CGobangChessboard::ai()
 {
-    int highestScore = 0;
-    int highestScoreIndexX;
-    int highestScoreIndexY;
+    double highestScore = 0;
+    int highestScoreIndexX = -1;
+    int highestScoreIndexY = -1;
     QVector<CGobangChessman*> highestChessmen;
 
 
@@ -136,467 +161,15 @@ void CGobangChessboard::ai()
 
 void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CChessmanType chessmanType)
 {
-    /** [addScore] */
-    for(int i = 1; i < 5; ++i)
+    /** [basicScore] */
+    for(int i = -1; -1 < indexX + i && indexX + i < 15 && i < 2; ++i)
     {
-        switch(i)
+        for(int j = -1; -1 < indexY + j && indexY + j < 15 && j < 2; ++j)
         {
-        case 1:
-        {
-            //"\"
-            int basicScore = 10;
-            QVector<CGobangChessman*> vectorTargets;
-            for(int j = 1; indexX - j > -1 && indexY - j > -1; ++j)
-            {
-                if(m_virtualChessboard[indexX - j][indexY - j].type() == chessmanType)
-                {
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX - j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX - j + 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX - j + 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 1; indexX + j < 15 && indexY + j < 15; ++j)
-            {
-                if(m_virtualChessboard[indexX + j][indexY + j].type() == chessmanType)
-                {
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX + j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX + j - 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX + j - 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 0; j < vectorTargets.size(); ++j)
-            {
-                vectorTargets.at(j)->addScore(basicScore);
-            }
-            break;
-        }
-        case 2:
-        {
-            //"/"
-            int basicScore = 10;
-            QVector<CGobangChessman*> vectorTargets;
-            for(int j = 1; indexX + j < 15 && indexY - j > -1; ++j)
-            {
-                if(m_virtualChessboard[indexX + j][indexY - j].type() == chessmanType)
-                {
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX + j - 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX + j - 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 1; indexX - j > -1 && indexY + j < 15; ++j)
-            {
-                if(m_virtualChessboard[indexX - j][indexY + j].type() == chessmanType)
-                {
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX - j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX - j + 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX - j + 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 0; j < vectorTargets.size(); ++j)
-            {
-                vectorTargets.at(j)->addScore(basicScore);
-            }
-            break;
-        }
-        case 3:
-        {
-            //"-"
-            int basicScore = 10;
-            QVector<CGobangChessman*> vectorTargets;
-            for(int j = 1; indexX - j > -1; ++j)
-            {
-                if(m_virtualChessboard[indexX - j][indexY].type() == chessmanType)
-                {
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX - j + 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX - j][indexY]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX - j][indexY]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX - j + 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 1; indexX + j < 15; ++j)
-            {
-                if(m_virtualChessboard[indexX + j][indexY].type() == chessmanType)
-                {
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX + j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX + j - 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX + j][indexY]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX + j][indexY]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX + j - 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 0; j < vectorTargets.size(); ++j)
-            {
-                vectorTargets.at(j)->addScore(basicScore);
-            }
-            break;
-        }
-        case 4:
-        {
-            //"|"
-            int basicScore = 10;
-            QVector<CGobangChessman*> vectorTargets;
-            for(int j = 1; indexY - j > -1; ++j)
-            {
-                if(m_virtualChessboard[indexX][indexY - j].type() == chessmanType)
-                {
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX][indexY - j]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX][indexY - j]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 1; indexY + j < 15; ++j)
-            {
-                if(m_virtualChessboard[indexX][indexY + j].type() == chessmanType)
-                {
-                    vectorTargets.append(&m_virtualChessboard[indexX][indexY + j]);
-                    basicScore *= m_chessModelGoodPower;
-                }
-                else if(m_virtualChessboard[indexX][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            vectorTargets.append(&m_virtualChessboard[indexX][indexY + j]);
-                        }
-                    }
-                    else
-                    {
-                        vectorTargets.append(&m_virtualChessboard[indexX][indexY + j]);
-                    }
-                }
-                else
-                {
-                    if(m_virtualChessboard[indexX][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
-                    {
-                        if(m_virtualChessboard[indexX][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
-                        {
-                            basicScore /= m_chessModelBadPower;
-                            break;
-                        }
-                        else
-                        {
-                            basicScore /= m_chessModelWorsePower;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        basicScore /= m_chessModelWorstPower;
-                        break;
-                    }
-                }
-            }
-            for(int j = 0; j < vectorTargets.size(); ++j)
-            {
-                vectorTargets.at(j)->addScore(basicScore);
-            }
-            break;
-        }
+            m_virtualChessboard[indexX + i][indexY + j].addScore(1);
         }
     }
-    /* [addScore] **/
+    /* [basicScore] **/
 
 
     /** [reduceScore] */
@@ -607,36 +180,393 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         case 1:
         {
             //"\"
-            int basicScore = -5;
-            QVector<CGobangChessman*> vectorTargets;
-            for(int j = 1; indexX - j > -1 && indexY - j > -1; ++j)
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE0_9;
+            for(int j = 1; indexX - j > -1 && indexY - j > -1; ++j)     //在棋盘范围内搜索
             {
                 if(m_virtualChessboard[indexX - j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
-                        if(m_virtualChessboard[indexX - j + 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)     //判断是否抵达边界
                         {
-                            vectorTargets.pop_back();
                             break;
                         }
-                        else if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)
+                        else if(m_virtualChessboard[indexX - j - 1][indexY - j - 1].type() == CGobangChessman::CChessmanType::Type_None)
                         {
+                            if(m_virtualChessboard[indexX - j + 2][indexY - j + 2].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
                     }
                 }
-                else if(m_virtualChessboard[indexX - j][indexY - j].type() != chessmanType)
+                else if(m_virtualChessboard[indexX - j][indexY - j].type() == chessmanType)
                 {
-                    basicScore *= m_chessModelWorsePower;
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            powerTargets.clear();
+            powerValue = POWERVALUE0_9;
+            for(int j = 1; indexX + j < 15 && indexY + j < 15; ++j)
+            {
+                if(m_virtualChessboard[indexX + j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX + j - 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
+                        {
+                            break;
+                        }
+                        else if(m_virtualChessboard[indexX + j + 1][indexY + j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            if(m_virtualChessboard[indexX + j - 2][indexY + j - 2].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
+                    }
+                }
+                else if(m_virtualChessboard[indexX + j][indexY + j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            break;
+        }
+        case 2:
+        {
+            //"/"
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE0_9;
+            for(int j = 1; indexX + j < 15 && indexY - j > -1; ++j)
+            {
+                if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
+                        {
+                            break;
+                        }
+                        else if(m_virtualChessboard[indexX + j + 1][indexY - j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            if(m_virtualChessboard[indexX + j - 2][indexY - j + 2].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                    }
+                }
+                else if(m_virtualChessboard[indexX + j][indexY - j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            powerTargets.clear();
+            powerValue = POWERVALUE0_9;
+            for(int j = 1; indexX - j > -1 && indexY + j < 15; ++j)
+            {
+                if(m_virtualChessboard[indexX - j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX - j + 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
+                        {
+                            break;
+                        }
+                        else if(m_virtualChessboard[indexX - j - 1][indexY + j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            if(m_virtualChessboard[indexX - j + 2][indexY + j - 2].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
+                    }
+                }
+                else if(m_virtualChessboard[indexX - j][indexY + j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            break;
+        }
+        case 3:
+        {
+            //"-"
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE0_9;
+            for(int j = 1; indexX - j > -1; ++j)
+            {
+                if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
+                        {
+                            break;
+                        }
+                        else if(m_virtualChessboard[indexX - j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            if(m_virtualChessboard[indexX - j + 2][indexY].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                    }
+                }
+                else if(m_virtualChessboard[indexX - j][indexY].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            powerTargets.clear();
+            powerValue = POWERVALUE0_9;
+            for(int j = 1; indexX + j < 15; ++j)
+            {
+                if(m_virtualChessboard[indexX + j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX + j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
+                        {
+                            break;
+                        }
+                        else if(m_virtualChessboard[indexX + j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            if(m_virtualChessboard[indexX + j - 2][indexY].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
+                    }
+                }
+                else if(m_virtualChessboard[indexX + j][indexY].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            break;
+        }
+        case 4:
+        {
+            //"|"
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE0_9;
+            for(int j = 1; indexY - j > -1; ++j)
+            {
+                if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
+                        {
+                            break;
+                        }
+                        else if(m_virtualChessboard[indexX][indexY - j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            if(m_virtualChessboard[indexX][indexY - j + 2].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                    }
+                }
+                else if(m_virtualChessboard[indexX][indexY - j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            powerTargets.clear();
+            powerValue = POWERVALUE0_9;
+            for(int j = 1; indexY + j < 15; ++j)
+            {
+                if(m_virtualChessboard[indexX][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
+                        {
+                            break;
+                        }
+                        else if(m_virtualChessboard[indexX][indexY + j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            if(m_virtualChessboard[indexX][indexY + j - 2].type() == chessmanType)
+                            {
+                                powerTargets.pop_back();
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
+                    }
+                }
+                else if(m_virtualChessboard[indexX][indexY + j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE0_8;
+                    break;
+                }
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
+            }
+            break;
+        }
+        }
+    }
+    /* [reduceScore] **/
+
+
+    /** [addScore] */
+    for(int i = 1; i < 5; ++i)
+    {
+        switch(i)
+        {
+        case 1:
+        {
+            //"\"
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE1_0;
+            for(int j = 1; indexX - j > -1 && indexY - j > -1; ++j)     //在棋盘范围内搜索
+            {
+                if(m_virtualChessboard[indexX - j][indexY - j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX - j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                {
+                    if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    {
+                        if(m_virtualChessboard[indexX - j + 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        {
+                            powerTargets.pop_back();
+                            if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
+                    }
                 }
                 else
                 {
@@ -645,77 +575,96 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
             }
             for(int j = 1; indexX + j < 15 && indexY + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX + j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX + j][indexY + j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX + j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX + j - 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
                         if(m_virtualChessboard[indexX + j - 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
                         {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
-                        {
+                            powerTargets.pop_back();
+                            if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
+                            if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
+                            }
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
                     }
-                }
-                else if(m_virtualChessboard[indexX + j][indexY + j].type() != chessmanType)
-                {
-                    basicScore *= m_chessModelWorsePower;
                 }
                 else
                 {
                     break;
                 }
             }
-            for(int j = 0; j < vectorTargets.size(); ++j)
+            powerValue -= powerTargets.size() * POWERVALUE0_1;
+            if(powerValue < 1.0)
             {
-                vectorTargets.at(j)->addScore(basicScore);
+                powerValue = 1.0;
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
             }
             break;
         }
         case 2:
         {
             //"/"
-            int basicScore = -5;
-            QVector<CGobangChessman*> vectorTargets;
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE1_0;
             for(int j = 1; indexX + j < 15 && indexY - j > -1; ++j)
             {
-                if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX + j][indexY - j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
                         if(m_virtualChessboard[indexX + j - 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
                         {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
-                        {
+                            powerTargets.pop_back();
+                            if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                            if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                            }
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
                     }
-                }
-                else if(m_virtualChessboard[indexX + j][indexY - j].type() != chessmanType)
-                {
-                    basicScore *= m_chessModelWorsePower;
                 }
                 else
                 {
@@ -724,77 +673,96 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
             }
             for(int j = 1; indexX - j > -1 && indexY + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX - j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX - j][indexY + j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX - j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX - j + 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
                         if(m_virtualChessboard[indexX - j + 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
                         {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
-                        {
+                            powerTargets.pop_back();
+                            if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
+                            if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
+                            }
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
                     }
-                }
-                else if(m_virtualChessboard[indexX - j][indexY + j].type() != chessmanType)
-                {
-                    basicScore *= m_chessModelWorsePower;
                 }
                 else
                 {
                     break;
                 }
             }
-            for(int j = 0; j < vectorTargets.size(); ++j)
+            powerValue -= powerTargets.size() * POWERVALUE0_1;
+            if(powerValue < 1.0)
             {
-                vectorTargets.at(j)->addScore(basicScore);
+                powerValue = 1.0;
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
             }
             break;
         }
         case 3:
         {
             //"-"
-            int basicScore = -5;
-            QVector<CGobangChessman*> vectorTargets;
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE1_0;
             for(int j = 1; indexX - j > -1; ++j)
             {
-                if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX - j][indexY].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                     {
                         if(m_virtualChessboard[indexX - j + 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                         {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
-                        {
+                            powerTargets.pop_back();
+                            if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                            if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                            }
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
                     }
-                }
-                else if(m_virtualChessboard[indexX - j][indexY].type() != chessmanType)
-                {
-                    basicScore *= m_chessModelWorsePower;
                 }
                 else
                 {
@@ -803,77 +771,96 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
             }
             for(int j = 1; indexX + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX + j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX + j][indexY].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX + j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX + j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                     {
                         if(m_virtualChessboard[indexX + j - 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                         {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
-                        {
+                            powerTargets.pop_back();
+                            if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX + j][indexY]);
+                            if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
+                            }
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX + j][indexY]);
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
                     }
-                }
-                else if(m_virtualChessboard[indexX + j][indexY].type() != chessmanType)
-                {
-                    basicScore *= m_chessModelWorsePower;
                 }
                 else
                 {
                     break;
                 }
             }
-            for(int j = 0; j < vectorTargets.size(); ++j)
+            powerValue -= powerTargets.size() * POWERVALUE0_1;
+            if(powerValue < 1.0)
             {
-                vectorTargets.at(j)->addScore(basicScore);
+                powerValue = 1.0;
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
             }
             break;
         }
         case 4:
         {
             //"|"
-            int basicScore = -5;
-            QVector<CGobangChessman*> vectorTargets;
+            QVector<CGobangChessman*> powerTargets;
+            double powerValue = POWERVALUE1_0;
             for(int j = 1; indexY - j > -1; ++j)
             {
-                if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX][indexY - j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
                         if(m_virtualChessboard[indexX][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
                         {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
-                        {
+                            powerTargets.pop_back();
+                            if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                            if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
+                            {
+                                powerValue *= POWERVALUE0_8;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                            }
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
                     }
-                }
-                else if(m_virtualChessboard[indexX][indexY - j].type() != chessmanType)
-                {
-                    basicScore *= m_chessModelWorsePower;
                 }
                 else
                 {
@@ -882,51 +869,73 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
             }
             for(int j = 1; indexY + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX][indexY + j].type() == chessmanType)
+                {
+                    powerValue *= POWERVALUE1_4;
+                }
+                else if(m_virtualChessboard[indexX][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
                         if(m_virtualChessboard[indexX][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
                         {
-                            vectorTargets.pop_back();
-                            break;
-                        }
-                        else if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
-                        {
+                            powerTargets.pop_back();
+                            if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
+                            {
+                                powerValue *= POWERVALUE0_9;
+                            }
                             break;
                         }
                         else
                         {
-                            vectorTargets.append(&m_virtualChessboard[indexX][indexY + j]);
+                            if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
+                            {
+                                powerValue *= POWERVALUE0_9;
+                            }
+                            else
+                            {
+                                powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
+                            }
                         }
                     }
                     else
                     {
-                        vectorTargets.append(&m_virtualChessboard[indexX][indexY + j]);
+                        powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
                     }
-                }
-                else if(m_virtualChessboard[indexX][indexY + j].type() != chessmanType)
-                {
-                    basicScore *= m_chessModelWorsePower;
                 }
                 else
                 {
                     break;
                 }
             }
-            for(int j = 0; j < vectorTargets.size(); ++j)
+            powerValue -= powerTargets.size() * POWERVALUE0_1;
+            if(powerValue < 1.0)
             {
-                vectorTargets.at(j)->addScore(basicScore);
+                powerValue = 1.0;
+            }
+            for(int j = 0; j < powerTargets.size(); ++j)
+            {
+                powerTargets[j]->powerScore(powerValue);
             }
             break;
         }
         }
     }
-    /* [reduceScore] **/
+    /* [addScore] **/
+
+
+    /** [aiReady] */
+    if(chessmanType == CGobangChessman::CChessmanType::Type_Black)
+    {
+        emit aiReady();
+    }
+    /* [aiReady] **/
 }
 
-void CGobangChessboard::checkWin(int indexX, int indexY, CGobangChessman::CChessmanType type)
+void CGobangChessboard::checkWin(const int indexX, const int indexY, const CGobangChessman::CChessmanType type)
 {
+    const CGobangChessman::CChessmanType temporaryType = m_playerChessmanType;
+    m_playerChessmanType = CGobangChessman::CChessmanType::Type_None;
     int chessmenNumber;
     for(int i = 1; i < 5; ++i)
     {
@@ -1047,6 +1056,7 @@ void CGobangChessboard::checkWin(int indexX, int indexY, CGobangChessman::CChess
         }
         if(chessmenNumber >= 5)
         {
+            emit win();
             switch(type)
             {
             default:
@@ -1067,6 +1077,8 @@ void CGobangChessboard::checkWin(int indexX, int indexY, CGobangChessman::CChess
             return;
         }
     }
+    m_playerChessmanType = temporaryType;
+    emit checked(indexX, indexY, type);
 }
 
 void CGobangChessboard::mouseMoveEvent(QMouseEvent *mouseMoveEvent)
@@ -1202,35 +1214,35 @@ void CGobangChessboard::paintChessboard()
                     ),
                 m_ellipsePixelRadius,
                 m_ellipsePixelRadius
-                );
+                );                          //左上
     painter.drawEllipse(
                 QPoint(
-                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4 - 1,
+                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4,
                     (m_linesPixelSpace + m_penPixelLength) * 4 - 1
                     ),
                 m_ellipsePixelRadius,
-                m_ellipsePixelRadius);
+                m_ellipsePixelRadius);      //右上
     painter.drawEllipse(
                 QPoint(
                     (m_linesPixelSpace + m_penPixelLength) * 8 - 1,
                     (m_linesPixelSpace + m_penPixelLength) * 8 - 1
                     ),
                 m_ellipsePixelRadius,
-                m_ellipsePixelRadius);
+                m_ellipsePixelRadius);      //中间
     painter.drawEllipse(
                 QPoint(
                     (m_linesPixelSpace + m_penPixelLength) * 4 - 1,
-                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4 - 1
+                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4
                     ),
                 m_ellipsePixelRadius,
-                m_ellipsePixelRadius);
+                m_ellipsePixelRadius);      //左下
     painter.drawEllipse(
                 QPoint(
-                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4 - 1,
-                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4 - 1
+                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4,
+                    m_chessboardImagePixelLength - (m_linesPixelSpace + m_penPixelLength) * 4
                     ),
                 m_ellipsePixelRadius,
-                m_ellipsePixelRadius);
+                m_ellipsePixelRadius);      //右下
     /* [PaintEllipses] **/
 
 

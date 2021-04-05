@@ -1,12 +1,14 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #ifndef CGOBANGCHESSMAN_H
 #define CGOBANGCHESSMAN_H
 
 #include <QObject>
+
+#define INITIALSCORE 1000
 
 class CGobangChessman : public QObject
 {
@@ -23,13 +25,13 @@ public:
     };
 
     explicit CGobangChessman();
+    ~CGobangChessman();
 
-    int score();
-
-    bool addScore(int score);
+    void addScore(int score);
     bool isEmpty();
-    bool oddsScore(int odds);
-    bool powerScore(int power);
+    bool powerScore(double power);
+    void restart();
+    double score();
     bool setChessman(CChessmanType type);
 
     CChessmanType type();
@@ -37,11 +39,10 @@ public:
 protected:
 
 private:
-    int m_score = 100;
+    bool m_isEmpty;         //是否落子
+    double m_score;         //棋子初始化分数
 
-    bool m_isEmpty = true;
-
-    CChessmanType m_type = Type_None;
+    CChessmanType m_type;   //棋子类型
 
 private slots:
 

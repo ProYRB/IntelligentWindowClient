@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #include "cstring.h"
@@ -15,185 +15,166 @@ CString::~CString()
     ;
 }
 
-int CString::GetStringSize()
+bool CString::isEmpty()
 {
-    return this->m_string.size();
+    if(this->m_qstring == "")
+    {
+        return true;
+    }
+    return false;
 }
 
-QString CString::GetString()
+qint16 CString::getSize()
 {
-    return this->m_string;
+    return this->m_qstring.size();
 }
 
-QList<int> CString::CheckCString(const int beginIndex, const int endIndex, const CStringModel model)
+QString CString::getString()
 {
-    QList<int> listAbortedResult;
-    if(beginIndex < 0 || endIndex < 0 || beginIndex > this->m_string.size() || endIndex > this->m_string.size() || beginIndex > endIndex)
-    {
-        listAbortedResult.append(-Error_IndexOverRange);
-        return listAbortedResult;
-    }
-    else
-    {
-        switch (model)
-        {
-        default:
-        {
-            listAbortedResult.append(-Error_ModelOverRange);
-            return listAbortedResult;
-        }
-        case Model_Account:
-        {
-            if(beginIndex == endIndex)
-            {
-                if(CheckChar(beginIndex, Model_Account) == Error_None)
-                {
-                    return listAbortedResult;
-                }
-                else
-                {
-                    listAbortedResult.append(beginIndex);
-                    return listAbortedResult;
-                }
-            }
-            else
-            {
-                for(int i = beginIndex; i <= endIndex; ++i)
-                {
-                    if(CheckChar(beginIndex, Model_Account) != Error_None)
-                    {
-                        listAbortedResult.append(beginIndex);
-                    }
-                }
-                return listAbortedResult;
-            }
-            break;
-        }
-        case Model_Password:
-        {
-            if(beginIndex == endIndex)
-            {
-                if(CheckChar(beginIndex, Model_Password) == Error_None)
-                {
-                    return listAbortedResult;
-                }
-                else
-                {
-                    listAbortedResult.append(beginIndex);
-                    return listAbortedResult;
-                }
-            }
-            else
-            {
-                for(int i = beginIndex; i <= endIndex; ++i)
-                {
-                    if(CheckChar(beginIndex, Model_Password) != Error_None)
-                    {
-                        listAbortedResult.append(beginIndex);
-                    }
-                }
-                return listAbortedResult;
-            }
-            break;
-        }
-        }
-    }
+    return this->m_qstring;
 }
 
-CString::CStringError CString::IfSet()
+CString::CStringError CString::check(const int index)
 {
-    if(this->m_string == "")
+    if(index < 0 || index > this->m_qstring.size() - 1)
     {
-        return Error_EmptyString;
+        return Error_NullIndex;
     }
-    else
-    {
-        return Error_None;
-    }
-}
-
-CString::CStringError CString::DeleteChar(const int index)
-{
-    QString temporary = this->m_string;
-    this->m_string = "";
-    for(int i = 0; i < temporary.size(); ++i)
-    {
-        if(i != index)
-        {
-            this->m_string += temporary[i];
-        }
-    }
-    if(this->m_string.size() == temporary.size() - 1)
-    {
-        return Error_None;
-    }
-    else
-    {
-        return Error_AbortedDelete;
-    }
-}
-
-CString::CStringError CString::SetCString(const QString string, bool change)
-{
-    if(string.size() == 0)
-    {
-        return Error_EmptyString;
-    }
-    else if(this->m_string != "")
-    {
-        if(change)
-        {
-            this->m_string = string;
-            return Error_None;
-        }
-        else
-        {
-            return Error_AbortedSet;
-        }
-    }
-    else
-    {
-        this->m_string = string;
-        return Error_None;
-    }
-}
-
-CString::CStringError CString::CheckChar(const int index, const CStringModel model)
-{
-    if(index < 0 || index > this->m_string.size() - 1)
-    {
-        return Error_IndexOverRange;
-    }
-    QChar checkedChar = this->m_string[index];
-    switch (model)
+    QChar targetChar = this->m_qstring[index];
+    switch (m_checkModel)
     {
     default:
     {
-        return Error_ModelOverRange;
+        return Error_NullModel;
     }
     case Model_Account:
     {
-        if(((47 < checkedChar) && (checkedChar < 58)) || ((64 < checkedChar) && (checkedChar < 91)) || ((96 < checkedChar) && (checkedChar < 123)))
+        if(((47 < targetChar) && (targetChar < 58)) || ((64 < targetChar) && (targetChar < 91)) || ((96 < targetChar) && (targetChar < 123)))
         {
             return Error_None;
-        }
-        else
-        {
-            return Error_CharOverRange;
         }
         break;
     }
     case Model_Password:
     {
-        if(((32 < checkedChar) && (checkedChar < 91)) || ((96 < checkedChar) && (checkedChar < 123)))
+        if(((32 < targetChar) && (targetChar < 91)) || ((96 < targetChar) && (targetChar < 123)))
         {
             return Error_None;
         }
-        else
+        break;
+    }
+    case Model_Code:
+    {
+        if((31 < targetChar) && (targetChar < 127))
         {
-            return Error_CharOverRange;
+            return Error_None;
         }
         break;
     }
     }
+    return Error_NullChar;
+}
+
+CString::CStringError CString::check(const int beginIndex, const int endIndex)
+{
+    if(beginIndex < 0 || endIndex > this->m_qstring.size() - 1 || beginIndex > endIndex)
+    {
+        return Error_NullIndex;
+    }
+    for(int i = beginIndex; i <= endIndex; ++i)
+    {
+        if(check(beginIndex, endIndex) != Error_None)
+        {
+            return Error_NullString;
+        }
+    }
+    return Error_None;
+}
+
+CString::CStringError CString::eliminate(const int index)
+{
+    return this->eliminate(index, index);
+}
+
+CString::CStringError CString::eliminate(const int beginIndex, const int endIndex)
+{
+    if(beginIndex < 0 || endIndex > this->m_qstring.size() - 1 || beginIndex > endIndex)
+    {
+        return Error_NullIndex;
+    }
+    QString temporaryString;
+    for(int i = 0; i < beginIndex; ++i)
+    {
+        temporaryString += this->m_qstring[i];
+    }
+    for(int i = endIndex + 1; i > endIndex && i < this->m_qstring.size(); ++i)
+    {
+        temporaryString += this->m_qstring[i];
+    }
+    if(this->m_qstring.size() == temporaryString.size() + (endIndex - beginIndex + 1))
+    {
+        this->m_qstring = temporaryString;
+        return Error_None;
+    }
+    return Error_AbortedEliminate;
+}
+
+CString::CStringError CString::insert(const int index, const QChar targetChar)
+{
+    QString targetString = QString(targetChar);
+    return this->insert(index, targetString);
+}
+
+CString::CStringError CString::insert(const int index, const QString target)
+{
+    if(index < 0 || index > this->m_qstring.size() - 1)
+    {
+        return Error_NullIndex;
+    }
+    else if(target == "")
+    {
+        return Error_NullString;
+    }
+    QString temporaryString;
+    for(int i = 0; i < index; ++i)
+    {
+        temporaryString += this->m_qstring[i];
+    }
+    temporaryString += target;
+    for(int i = index; i < this->m_qstring.size(); ++i)
+    {
+        temporaryString += this->m_qstring[i];
+    }
+    if(this->m_qstring.size() == temporaryString.size() - target.size())
+    {
+        this->m_qstring = temporaryString;
+        return Error_None;
+    }
+    return Error_AbortedInset;
+}
+
+CString::CStringError CString::replace(const int index, const QChar targetChar)
+{
+    QString targetString = QString(targetChar);
+    return this->replace(index, index, targetString);
+}
+
+CString::CStringError CString::replace(const int beginIndex, const int endIndex, const QString targetString)
+{
+    CStringError abc = this->eliminate(beginIndex, endIndex);
+    if(abc == Error_None)
+    {
+        return this->insert(beginIndex, targetString);
+    }
+    return Error_AbortedReplace;
+}
+
+CString::CStringError CString::set(const QString setString)
+{
+    this->m_qstring = setString;
+    if(this->m_qstring == setString)
+    {
+        return Error_None;
+    }
+    return Error_AbortedSet;
 }

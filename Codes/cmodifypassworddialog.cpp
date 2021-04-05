@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #include "cmodifypassworddialog.h"
@@ -43,31 +43,31 @@ CModifyPasswordDialog::CModifyPasswordDialog(QString account, QWidget *parent) :
     ui->lineEditSecretiveQuestion2->setText(encrypt.XOR(userQuestion2, CEncrypt::Model_XOR).data());
     connect(ui->lineEditOldPassword, &QLineEdit::textChanged, [&](const QString &lineEditString){
         CString checkString(lineEditString);
-        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_CharOverRange){
-            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-            {
-                ui->lineEditOldPassword->setText(checkString.GetString());
-            }
-            else
-            {
-                ui->lineEditOldPassword->clear();
-            }
-            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-        }
+//        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_NullChar){
+//            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
+//            {
+//                ui->lineEditOldPassword->setText(checkString.GetQString());
+//            }
+//            else
+//            {
+//                ui->lineEditOldPassword->clear();
+//            }
+//            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
+//        }
     });
     connect(ui->lineEditNewPassword, &QLineEdit::textChanged, [&](const QString &lineEditString){
         CString checkString(lineEditString);
-        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_CharOverRange){
-            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-            {
-                ui->lineEditNewPassword->setText(checkString.GetString());
-            }
-            else
-            {
-                ui->lineEditNewPassword->clear();
-            }
-            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-        }
+//        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_NullChar){
+//            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
+//            {
+//                ui->lineEditNewPassword->setText(checkString.GetQString());
+//            }
+//            else
+//            {
+//                ui->lineEditNewPassword->clear();
+//            }
+//            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
+//        }
     });
 
     /**

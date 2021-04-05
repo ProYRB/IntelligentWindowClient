@@ -1,7 +1,8 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
+
 #include "cmainwindow.h"
 #include "ui_cmainwindow.h"
 
@@ -90,7 +91,7 @@ CMainWindow::CMainWindow(const QString account, QWidget *parent)
     {
         ui->stackedWidgetMain->setCurrentIndex(3);
     });
-    connect(ui->toolButtonKit, &QToolButton::clicked, [&]()
+    connect(ui->toolButtonTools, &QToolButton::clicked, [&]()
     {
         ui->stackedWidgetMain->setCurrentIndex(4);
     });
@@ -102,6 +103,7 @@ CMainWindow::CMainWindow(const QString account, QWidget *parent)
 
 
     /** [SidedMenu\Recreation\Gobang] */
+    ui->tabWidgetRecreation->setCurrentIndex(0);
     ui->stackedWidgetGobang->setCurrentIndex(0);
     connect(ui->toolButtonGobangPVC, &QToolButton::clicked, [&]()
     {
@@ -126,19 +128,23 @@ CMainWindow::CMainWindow(const QString account, QWidget *parent)
     connect(ui->pushButtonRestart, &QPushButton::clicked, [&]()
     {
         ui->labelGobangPVCChessboard->restart();
-        ui->labelBlackPlayerMessage->setText("");
-        ui->labelWhitePlayerMessage->setText("");
-//        qDebug() << "=====重新开始=====";
+        ui->labelGobangPVCMessageboard->setText("");
+
     });
     connect(ui->labelGobangPVCChessboard, &CGobangChessboard::blackWin, [&]()
     {
-        ui->labelBlackPlayerMessage->setText("黑棋胜利！");
+        ui->labelGobangPVCMessageboard->setText("黑棋胜利！");
     });
     connect(ui->labelGobangPVCChessboard, &CGobangChessboard::whiteWin, [&]()
     {
-        ui->labelWhitePlayerMessage->setText("白棋胜利！");
+        ui->labelGobangPVCMessageboard->setText("白棋胜利！");
     });
     /* [SidedMenu\Recreation\Gobang] **/
+
+
+    /** [SidedMenu\Tools\EditPictures] */
+    ui->tabWidgetTools->setCurrentIndex(0);
+    /* [SidedMenu\Tools\CalculateFormula] **/
 
 
     /** [StatusMenu] */

@@ -1,71 +1,70 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #include "cgobangchessman.h"
 
 CGobangChessman::CGobangChessman()
 {
+    m_isEmpty = true;
+    m_score = INITIALSCORE;
+    m_type = Type_None;
+}
+
+CGobangChessman::~CGobangChessman()
+{
     ;
 }
 
-int CGobangChessman::score()
+void CGobangChessman::addScore(int score)
 {
-    if(m_type == Type_None)
-    {
-        return m_score;
-    }
-    return 0;
-}
-
-bool CGobangChessman::addScore(int score)
-{
-    if(!m_isEmpty)
-    {
-        return false;
-    }
-    m_score += score;
-    return true;
+    this->m_score += score;
 }
 
 bool CGobangChessman::isEmpty()
 {
-    return m_isEmpty;
+    return this->m_isEmpty;
 }
 
-bool CGobangChessman::oddsScore(int odds)
+bool CGobangChessman::powerScore(double power)
 {
-    if(m_type == Type_None && odds <= 0)
+    if(this->m_isEmpty == true && power > 0)
     {
-        return false;
+        this->m_score *= power;
+        return true;
     }
-    m_score /= odds;
-    return true;
+    return false;
 }
 
-bool CGobangChessman::powerScore(int power)
+void CGobangChessman::restart()
 {
-    if(m_type == Type_None && power <= 0)
+    this->m_isEmpty = true;
+    this->m_score = INITIALSCORE;
+    this->m_type = Type_None;
+}
+
+double CGobangChessman::score()
+{
+    if(m_type == Type_None)
     {
-        return false;
+        return this->m_score;
     }
-    m_score *= power;
-    return true;
+    return 0;
 }
 
 bool CGobangChessman::setChessman(CChessmanType type)
 {
-    if(!m_isEmpty)
+    if(this->m_isEmpty)
     {
-        return false;
+        this->m_type = type;
+        this->m_isEmpty =  false;
+        return true;
     }
-    m_type = type;
-    m_isEmpty = false;
-    return true;
+    return false;
 }
 
 CGobangChessman::CChessmanType CGobangChessman::type()
 {
-    return m_type;
+    return this->m_type;
 }

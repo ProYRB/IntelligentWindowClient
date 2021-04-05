@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #ifndef CREGISTERDIALOG_H
@@ -9,17 +9,18 @@
 #include "cstring.h"
 #include "cencrypt.h"
 
-#include <QDir>
-#include <QLine>
-#include <QFile>
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDialog>
-#include <QString>
-#include <QLineEdit>
-#include <QStringList>
+#include <QDir>
 #include <QDataStream>
+#include <QFile>
+#include <QLine>
+#include <QLineEdit>
 #include <QMessageBox>
-#include <QCoreApplication>
+#include <QRegExpValidator>
+#include <QString>
+#include <QStringList>
 
 namespace Ui {
 class CRegisterDialog;

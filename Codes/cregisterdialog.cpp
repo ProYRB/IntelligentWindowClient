@@ -1,6 +1,6 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
 #include "cregisterdialog.h"
@@ -12,75 +12,24 @@ CRegisterDialog::CRegisterDialog(QWidget *parent) :
 {
     ui->setupUi(this);  //默认代码
 
-    /**************************************************
-     * 代码区块【文件系统】【开始】
-     */
 
+    /** [FilesSystem] */
     m_dirUsersEnc.setPath(m_path_users_enc);
     if(!m_dirUsersEnc.exists())
     {
         m_dirUsersEnc.mkpath(m_path_users_enc);
     }
+    /* [FilesSystem] **/
 
-    /**
-     * 代码区块【文件系统】【结束】
-     **************************************************/
 
-    /**************************************************
-     * 代码区块【输入框】【开始】
-     */
+    /** [LineEdits] */
+    ui->lineEditAccount->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9]{0,20}"), this));            //用正则表达式来限制输入
+    ui->lineEditPassword->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9-@#&/*+]{0,20}"), this));    //用正则表达式来限制输入
+    ui->lineEditPasswordAgain->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9-@#&/*+]{0,20}"), this));    //用正则表达式来限制输入
+    /* [LineEdits] **/
 
-    connect(ui->lineEditAccount, &QLineEdit::textChanged, [&](const QString &lineEditString){
-        CString checkString(lineEditString);
-        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Account) == CString::Error_CharOverRange){
-            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-            {
-                ui->lineEditAccount->setText(checkString.GetString());
-            }
-            else
-            {
-                ui->lineEditAccount->clear();
-            }
-            QMessageBox::warning(this, "提示", "账号只能包含阿拉伯数字和大小写字母！");
-        }
-    });
-    connect(ui->lineEditPassword, &QLineEdit::textChanged, [&](const QString &lineEditString){
-        CString checkString(lineEditString);
-        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_CharOverRange){
-            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-            {
-                ui->lineEditPassword->setText(checkString.GetString());
-            }
-            else
-            {
-                ui->lineEditPassword->clear();
-            }
-            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-        }
-    });
-    connect(ui->lineEditPasswordAgain, &QLineEdit::textChanged, [&](const QString &lineEditString){
-        CString checkString(lineEditString);
-        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_CharOverRange){
-            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-            {
-                ui->lineEditPasswordAgain->setText(checkString.GetString());
-            }
-            else
-            {
-                ui->lineEditPasswordAgain->clear();
-            }
-            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-        }
-    });
 
-    /**
-     * 代码区块【输入框】【结束】
-     **************************************************/
-
-    /**************************************************
-     * 代码区块【注册】【开始】
-     */
-
+    /** [Register] */
     connect(ui->toolButtonRegister, &QToolButton::clicked, [&](){
         if(isNetwork)
         {
@@ -174,10 +123,7 @@ CRegisterDialog::CRegisterDialog(QWidget *parent) :
     });
 
     connect(this, &CRegisterDialog::registered, this, &CRegisterDialog::clearLineEdits);
-
-    /**
-     * 代码区块【注册】【结束】
-     **************************************************/
+    /* [Register] **/
 }
 
 CRegisterDialog::~CRegisterDialog()

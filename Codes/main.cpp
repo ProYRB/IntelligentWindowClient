@@ -1,8 +1,9 @@
 /******************************
  *  Author  :   YangRongBao
- *  Date    :   2021.3
+ *  Date    :   2021.4
 ******************************/
 
+#include "cstring.h"
 #include "cmainwindow.h"
 #include "cloginwindow.h"
 
