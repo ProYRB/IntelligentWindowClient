@@ -1,5 +1,5 @@
 # IntelligentWindowClinet
-# Client desktop application developed with QT.
+# 用Qt开发的桌面应用程序。
 
 The project involves the following basic points:
   1. Login account
