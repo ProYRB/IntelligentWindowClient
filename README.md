@@ -1,4 +1,5 @@
 # IntelligentWindowClinet
+
 **用Qt开发的桌面应用程序。**
 
 The project involves the following basic points:
