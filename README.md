@@ -1,5 +1,10 @@
 # ***IntelligentWindowClinet***
-* Made in Qt
+* 项目背景
+  * 为了自己
+    * 为了大家
+  * 为了大家
+* Usage
+* Maintainers
   1. Login account
   2. Switching accounts
   3. Registered account number
