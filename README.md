@@ -16,7 +16,6 @@
 * 主要功能
   * 注册账号
   * 本地登录
-  * 切换账号
   * 找回密码
   * 修改密码
   * 加密文件
@@ -24,11 +23,5 @@
     * 娱乐
       * 五子棋
         * 人机对弈
-  1. Login account
-  2. Switching accounts
-  3. Registered account number
-  4. Find the password
-  5. Information security
-  6. Gobang
 
-# 持续更新中……
+###### 持续更新中……
