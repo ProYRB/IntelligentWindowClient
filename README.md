@@ -1,5 +1,5 @@
 # ***IntelligentWindowClinet***
-*Made in Qt
+* Made in Qt
   1. Login account
   2. Switching accounts
   3. Registered account number
