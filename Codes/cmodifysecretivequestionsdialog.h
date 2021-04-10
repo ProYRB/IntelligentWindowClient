@@ -9,10 +9,11 @@
 #include "cstring.h"
 #include "cencrypt.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QDialog>
 #include <QMessageBox>
-#include <QCoreApplication>
+#include <QRegExpValidator>
 
 namespace Ui {
 class CModifySecretiveQuestionsDialog;

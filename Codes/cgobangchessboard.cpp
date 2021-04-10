@@ -9,7 +9,7 @@ CGobangChessboard::CGobangChessboard(QWidget *parent)
     : QLabel(parent)
 {
     /** [InitializeVirtualChessboard] */
-    m_virtualChessboard = (CGobangChessman **)new CGobangChessman*[15];
+    m_virtualChessboard = (CGobangChessman**) new CGobangChessman*[15];
     for(int i = 0; i < 15; ++i)
     {
         m_virtualChessboard[i] = new CGobangChessman[15];
@@ -61,7 +61,7 @@ CGobangChessboard::CGobangChessboard(QWidget *parent)
 
 void CGobangChessboard::restart()
 {
-//    qDebug() << "=====重新开始=====";
+    qDebug() << "=====重新开始=====";
 
 
     /** [InitializeVirtualChessboard] */
@@ -151,7 +151,7 @@ void CGobangChessboard::ai()
 
 
     /** [Play] */
-//    qDebug() << "White:" << m_virtualChessboard[highestScoreIndexX][highestScoreIndexY].score();
+    qDebug() << "White:" << m_virtualChessboard[highestScoreIndexX][highestScoreIndexY].score();
     this->paintChessman(highestScoreIndexX, highestScoreIndexY, CGobangChessman::CChessmanType::Type_White);
     m_virtualChessboard[highestScoreIndexX][highestScoreIndexY].setChessman(CGobangChessman::CChessmanType::Type_White);
     m_playerChessmanType = CGobangChessman::CChessmanType::Type_Black;
@@ -1166,7 +1166,7 @@ void CGobangChessboard::mouseReleaseEvent(QMouseEvent *mouseReleaseEvent)
     }
     if(m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].isEmpty())
     {
-//        qDebug() << "Black:" << m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].score();
+        qDebug() << "Black:" << m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].score();
         this->paintChessman(newChessboardPositionIndexX, newChessboardPositionIndexY, CGobangChessman::CChessmanType::Type_Black);
         m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].setChessman(CGobangChessman::CChessmanType::Type_Black);
         m_playerChessmanType = CGobangChessman::CChessmanType::Type_White;
@@ -1176,10 +1176,9 @@ void CGobangChessboard::mouseReleaseEvent(QMouseEvent *mouseReleaseEvent)
 
 void CGobangChessboard::paintChessboard()
 {
+    /** [SetPainter] */
     QImage *temporaryImage = new QImage(m_chessboardImagePixelLength, m_chessboardImagePixelLength, QImage::Format_ARGB32);
     QPainter painter;
-
-    /** [SetPainter] */
     painter.begin(temporaryImage);
     painter.setPen(QPen(COLOR_BLACK));
     painter.setBrush(QBrush(COLOR_BLACK));
@@ -1246,15 +1245,11 @@ void CGobangChessboard::paintChessboard()
     /* [PaintEllipses] **/
 
 
-    /** [LoadPaintedImage] */
+    /** [LoadAndSavePaintedImage] */
     painter.end();
     this->setPixmap(QPixmap::fromImage(*temporaryImage));
-    /* [LoadPaintedImage] **/
-
-
-    /** [SavePaintedImage] */
     m_vectorPlayImagesHistory.append(temporaryImage);
-    /* [SavePaintedImage] **/
+    /* [LoadPaintedImage] **/
 }
 
 void CGobangChessboard::paintPredictor()
@@ -1290,11 +1285,9 @@ void CGobangChessboard::paintPredictor()
 
 bool CGobangChessboard::paintChessman(int indexX, int indexY, CGobangChessman::CChessmanType chessmanType)
 {
+    /** [SetPainter] */
     QImage *temporaryImage = new QImage(*m_vectorPlayImagesHistory.last());
     QPainter painter;
-
-
-    /** [SetPainter] */
     painter.begin(temporaryImage);
     switch(chessmanType)
     {

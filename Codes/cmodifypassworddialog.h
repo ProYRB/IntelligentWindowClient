@@ -9,12 +9,13 @@
 #include "cstring.h"
 #include "cencrypt.h"
 
-#include <QDir>
-#include <QFile>
-#include <QDialog>
-#include <QString>
-#include <QMessageBox>
 #include <QCoreApplication>
+#include <QDir>
+#include <QDialog>
+#include <QFile>
+#include <QMessageBox>
+#include <QRegExpValidator>
+#include <QString>
 
 namespace Ui {
 class CModifyPasswordDialog;

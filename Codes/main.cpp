@@ -14,7 +14,6 @@
 int main(int argc, char *argv[])
 {
     QApplication intelligentWindowClient(argc, argv);
-
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");  //此格式支持中文
     QTextCodec::setCodecForLocale(codec);   //设置文件格式
 

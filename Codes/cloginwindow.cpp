@@ -28,20 +28,13 @@ CLoginWindow::CLoginWindow(QWidget *parent)
     /* [FilesSystem] **/
 
 
-    /** [WidgetBackground] */
-//    QPalette palette;
-//    palette.setBrush(QPalette::Background,QBrush(QPixmap(":/image/png/sign.png").scaled(this->size(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation)));
-//    this->setPalette(palette);
-    /* [WidgetBackground] **/
-
-
     /** [MessagesLabel] */
     /* [MessagesLabel] **/
 
 
     /** [LineEdits] */
-    ui->lineEditAccount->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9]{0,20}"), this));            //用正则表达式来限制输入
-    ui->lineEditPassword->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9-@#&/*+]{0,20}"), this));    //用正则表达式来限制输入
+    ui->lineEditAccount->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9]{0,30}"), this));            //用正则表达式来限制输入
+    ui->lineEditPassword->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9-@#&/*+]{0,30}"), this));    //用正则表达式来限制输入
     /* [LineEdits] **/
 
 

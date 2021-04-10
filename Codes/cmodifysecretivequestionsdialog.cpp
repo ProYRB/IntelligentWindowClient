@@ -12,16 +12,12 @@ CModifySecretiveQuestionsDialog::CModifySecretiveQuestionsDialog(const QString a
 {
     ui->setupUi(this);  //默认代码
 
-    /**************************************************
-     * 代码区块【文件系统】【开始】
-     */
-
+    /** [FilesSystem] */
     m_dirUsersEnc.setPath(m_path_users_enc);
     if(!m_dirUsersEnc.exists())
     {
         m_dirUsersEnc.mkpath(m_path_users_enc);
     }
-
     QString fileCode;
     QByteArray userAccount, userPassword, userQuestion1, userAnswer1, userQuestion2, userAnswer2;
     QFile file_user_enc(m_path_users_enc + account + ".enc");
@@ -29,41 +25,14 @@ CModifySecretiveQuestionsDialog::CModifySecretiveQuestionsDialog(const QString a
     file_user_enc.open(QIODevice::ReadOnly);
     readStream >> fileCode >> userAccount >> userPassword >> userQuestion1 >> userAnswer1 >> userQuestion2 >> userAnswer2;
     file_user_enc.close();
+    /* [FilesSystem] **/
 
-    /**
-     * 代码区块【文件系统】【结束】
-     **************************************************/
 
-    /**************************************************
-     * 代码区块【输入框】【开始】
-     */
+    /** [LineEdits] */
+    ui->lineEditPassword->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9-@#&/*+]{0,30}"), this));    //用正则表达式来限制输入
+    /* [LineEdits] **/
 
-    CEncrypt encrypt;
-    ui->lineEditSecretiveQuestion1->setText(encrypt.XOR(userQuestion1, CEncrypt::Model_XOR).data());
-    ui->lineEditSecretiveQuestion2->setText(encrypt.XOR(userQuestion2, CEncrypt::Model_XOR).data());
-    connect(ui->lineEditPassword, &QLineEdit::textChanged, [&](const QString &lineEditString){
-        CString checkString(lineEditString);
-//        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_NullChar){
-//            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-//            {
-//                ui->lineEditPassword->setText(checkString.GetQString());
-//            }
-//            else
-//            {
-//                ui->lineEditPassword->clear();
-//            }
-//            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-//        }
-    });
-
-    /**
-     * 代码区块【输入框】【结束】
-     **************************************************/
-
-    /**************************************************
-     * 代码区块【修改】【开始】
-     */
-
+    /** [Modify] */
     connect(ui->toolButtonModify, &QToolButton::clicked, [=](){
         if(isNetwork)
         {
@@ -84,7 +53,7 @@ CModifySecretiveQuestionsDialog::CModifySecretiveQuestionsDialog(const QString a
             }
             if(secretiveQuestion1 == "" || secretiveQuestion2 == "")
             {
-                QMessageBox::warning(this, "提示", "秘问不能为空！");
+                QMessageBox::warning(this, "提示", "问题不能为空！");
                 return;
             }
             if(secretiveAnswer1 == "" || secretiveAnswer2 == "")
@@ -144,10 +113,7 @@ CModifySecretiveQuestionsDialog::CModifySecretiveQuestionsDialog(const QString a
             }
         }
     });
-
-    /**
-     * 代码区块【修改】【结束】
-     **************************************************/
+    /* [Modify] **/
 }
 
 CModifySecretiveQuestionsDialog::~CModifySecretiveQuestionsDialog()

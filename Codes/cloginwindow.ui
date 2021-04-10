@@ -390,7 +390,7 @@ color:rgb(0, 0, 0);</string>
             <string/>
            </property>
            <property name="maxLength">
-            <number>20</number>
+            <number>30</number>
            </property>
            <property name="frame">
             <bool>true</bool>
@@ -530,7 +530,7 @@ color:rgb(0, 0, 0);</string>
             <string/>
            </property>
            <property name="maxLength">
-            <number>20</number>
+            <number>30</number>
            </property>
            <property name="frame">
             <bool>true</bool>

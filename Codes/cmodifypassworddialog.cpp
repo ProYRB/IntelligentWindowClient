@@ -41,34 +41,7 @@ CModifyPasswordDialog::CModifyPasswordDialog(QString account, QWidget *parent) :
     CEncrypt encrypt;
     ui->lineEditSecretiveQuestion1->setText(encrypt.XOR(userQuestion1, CEncrypt::Model_XOR).data());
     ui->lineEditSecretiveQuestion2->setText(encrypt.XOR(userQuestion2, CEncrypt::Model_XOR).data());
-    connect(ui->lineEditOldPassword, &QLineEdit::textChanged, [&](const QString &lineEditString){
-        CString checkString(lineEditString);
-//        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_NullChar){
-//            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-//            {
-//                ui->lineEditOldPassword->setText(checkString.GetQString());
-//            }
-//            else
-//            {
-//                ui->lineEditOldPassword->clear();
-//            }
-//            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-//        }
-    });
-    connect(ui->lineEditNewPassword, &QLineEdit::textChanged, [&](const QString &lineEditString){
-        CString checkString(lineEditString);
-//        if(checkString.CheckChar(checkString.GetStringSize() - 1, CString::Model_Password) == CString::Error_NullChar){
-//            if(checkString.DeleteChar(checkString.GetStringSize() - 1) == CString::Error_None)
-//            {
-//                ui->lineEditNewPassword->setText(checkString.GetQString());
-//            }
-//            else
-//            {
-//                ui->lineEditNewPassword->clear();
-//            }
-//            QMessageBox::warning(this, "提示", "密码只能包含阿拉伯数字、大小写字母以及一部分特殊符号！");
-//        }
-    });
+    ui->lineEditNewPassword->setValidator(new QRegExpValidator(QRegExp("[A-Za-z0-9-@#&/*+]{0,30}"), this));    //用正则表达式来限制输入
 
     /**
      * 代码区块【输入框】【结束】
@@ -87,7 +60,6 @@ CModifyPasswordDialog::CModifyPasswordDialog(QString account, QWidget *parent) :
         {
             QString secretiveAnswer1 = ui->lineEditSecretiveAnswer1->text();
             QString secretiveAnswer2 = ui->lineEditSecretiveAnswer2->text();
-            QString oldPassword = ui->lineEditOldPassword->text();
             QString newPassword = ui->lineEditNewPassword->text();
 
             if(secretiveAnswer1 == "" || secretiveAnswer2 == "")
@@ -95,14 +67,9 @@ CModifyPasswordDialog::CModifyPasswordDialog(QString account, QWidget *parent) :
                 QMessageBox::warning(this, "提示", "答案不能为空！");
                 return;
             }
-            if(oldPassword == "" || newPassword == "")
+            if(newPassword == "")
             {
                 QMessageBox::warning(this, "提示", "密码不能为空！");
-                return;
-            }
-            if(oldPassword == newPassword)
-            {
-                QMessageBox::warning(this, "提示", "两次密码输入一致！");
                 return;
             }
 
@@ -129,11 +96,6 @@ CModifyPasswordDialog::CModifyPasswordDialog(QString account, QWidget *parent) :
                     else if(secretiveAnswer2 != myencrypt.XOR(userAnswer2, CEncrypt::Model_XOR).data())
                     {
                         QMessageBox::warning(this, "提示", "第二个秘问答案输入错误！");
-                        return;
-                    }
-                    else if(oldPassword != myencrypt.XOR(userPassword, CEncrypt::Model_XOR).data())
-                    {
-                        QMessageBox::warning(this, "提示", "原密码输入错误！");
                         return;
                     }
                     else
