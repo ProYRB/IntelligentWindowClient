@@ -1,5 +1,6 @@
-# ***IntelligentWindowClinet***    **The project involves the following basic points:**
-  >1. Login account
+# ***IntelligentWindowClinet***
+**The project involves the following basic points:**
+  1. Login account
   2. Switching accounts
   3. Registered account number
   4. Find the password
