@@ -1,10 +1,17 @@
 # ***IntelligentWindowClinet***
-* 项目`背景`
-  * 为了`自己`
-    * 为了`大家`
-  * 为了大家
-* Usage
-* Maintainers
+* 项目动机
+ * 为了自己
+  * 构思所欲
+  * 实践所思
+  * 反思所践
+  * 实践所思
+ * 为了大家
+  * 开源代码
+  * 提供思路
+* 开发人员
+ * ProYRB
+  * 
+* 
   1. Login account
   2. Switching accounts
   3. Registered account number
