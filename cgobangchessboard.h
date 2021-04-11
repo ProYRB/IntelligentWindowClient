@@ -24,12 +24,13 @@
 #define COLOR_EDGE QColor(130, 130, 130)
 #define COLOR_WHITE QColor(255, 255, 255)
 
-#define POWERVALUE0_1 0.1
-#define POWERVALUE0_8 0.8
-#define POWERVALUE0_9 0.9
-#define POWERVALUE1_0 1.0
-#define POWERVALUE1_2 1.2
-#define POWERVALUE1_4 1.4
+#define POWERVALUE0_05 0.05
+#define POWERVALUE0_10 0.10
+#define POWERVALUE0_90 0.90
+#define POWERVALUE0_95 0.95
+#define POWERVALUE1_00 1.00
+#define POWERVALUE1_15 1.15
+#define POWERVALUE1_20 1.20
 
 class CGobangChessboard : public QLabel
 {

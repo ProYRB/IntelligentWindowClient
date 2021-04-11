@@ -61,9 +61,6 @@ CGobangChessboard::CGobangChessboard(QWidget *parent)
 
 void CGobangChessboard::restart()
 {
-    qDebug() << "=====重新开始=====";
-
-
     /** [InitializeVirtualChessboard] */
     for(int i = 0; i < 15; ++i)      //初始化棋盘
     {
@@ -84,6 +81,7 @@ void CGobangChessboard::restart()
     }
     /* [InitializeVirtualChessboard] **/
 
+
     m_chessboardPositionIndexX = -1;
     m_chessboardPositionIndexY = -1;
 
@@ -93,6 +91,8 @@ void CGobangChessboard::restart()
     m_playerChessmanType = CGobangChessman::CChessmanType::Type_Black;
 
     this->paintChessboard();
+
+//    qDebug() << "=====重新开始=====";
 }
 
 void CGobangChessboard::ai()
@@ -151,7 +151,7 @@ void CGobangChessboard::ai()
 
 
     /** [Play] */
-    qDebug() << "White:" << m_virtualChessboard[highestScoreIndexX][highestScoreIndexY].score();
+//    qDebug() << "White:" << m_virtualChessboard[highestScoreIndexX][highestScoreIndexY].score();
     this->paintChessman(highestScoreIndexX, highestScoreIndexY, CGobangChessman::CChessmanType::Type_White);
     m_virtualChessboard[highestScoreIndexX][highestScoreIndexY].setChessman(CGobangChessman::CChessmanType::Type_White);
     m_playerChessmanType = CGobangChessman::CChessmanType::Type_Black;
@@ -161,17 +161,6 @@ void CGobangChessboard::ai()
 
 void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CChessmanType chessmanType)
 {
-    /** [basicScore] */
-    for(int i = -1; -1 < indexX + i && indexX + i < 15 && i < 2; ++i)
-    {
-        for(int j = -1; -1 < indexY + j && indexY + j < 15 && j < 2; ++j)
-        {
-            m_virtualChessboard[indexX + i][indexY + j].addScore(1);
-        }
-    }
-    /* [basicScore] **/
-
-
     /** [reduceScore] */
     for(int i = 1; i < 5; ++i)
     {
@@ -181,68 +170,67 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"\"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE0_9;
+            bool ifPower = false;
             for(int j = 1; indexX - j > -1 && indexY - j > -1; ++j)     //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX - j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX - j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)     //判断是否抵达边界
+                        if(indexX - j == 0 || indexY - j == 0)      //判断是否抵达边界
                         {
                             break;
                         }
-                        else if(m_virtualChessboard[indexX - j - 1][indexY - j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX - j - 1][indexY - j - 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
                         {
-                            if(m_virtualChessboard[indexX - j + 2][indexY - j + 2].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);  //如果当前位置的反向一个单位的位置存在棋子（只能是对手棋子）则记录当前位置
                     }
                 }
-                else if(m_virtualChessboard[indexX - j][indexY - j].type() == chessmanType)
+                else if(m_virtualChessboard[indexX - j][indexY - j].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             powerTargets.clear();
-            powerValue = POWERVALUE0_9;
+            ifPower = false;
             for(int j = 1; indexX + j < 15 && indexY + j < 15; ++j)
             {
                 if(m_virtualChessboard[indexX + j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX + j - 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
-                        if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
+                        if(indexX + j == 14 || indexY + j == 14)
                         {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
                             break;
                         }
-                        else if(m_virtualChessboard[indexX + j + 1][indexY + j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX + j + 1][indexY + j + 1].type() != CGobangChessman::CChessmanType::Type_None)
                         {
-                            if(m_virtualChessboard[indexX + j - 2][indexY + j - 2].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
+                            break;
                         }
                     }
                     else
@@ -250,15 +238,21 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
                         powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
                     }
                 }
-                else if(m_virtualChessboard[indexX + j][indexY + j].type() == chessmanType)
+                else if(m_virtualChessboard[indexX + j][indexY + j].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             break;
         }
@@ -266,68 +260,67 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"/"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE0_9;
-            for(int j = 1; indexX + j < 15 && indexY - j > -1; ++j)
+            bool ifPower = false;
+            for(int j = 1; indexX + j < 15 && indexY - j > -1; ++j)     //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
+                        if(indexX + j == 14 || indexY - j == 0)     //判断是否抵达边界
                         {
                             break;
                         }
-                        else if(m_virtualChessboard[indexX + j + 1][indexY - j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX + j + 1][indexY - j - 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
                         {
-                            if(m_virtualChessboard[indexX + j - 2][indexY - j + 2].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);          //如果当前位置的反向一个单位的位置存在棋子则记录当前位置
                     }
                 }
-                else if(m_virtualChessboard[indexX + j][indexY - j].type() == chessmanType)
+                else if(m_virtualChessboard[indexX + j][indexY - j].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             powerTargets.clear();
-            powerValue = POWERVALUE0_9;
+            ifPower = false;
             for(int j = 1; indexX - j > -1 && indexY + j < 15; ++j)
             {
                 if(m_virtualChessboard[indexX - j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX - j + 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
-                        if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
+                        if(indexX - j == 0 || indexY + j == 14)
                         {
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
                             break;
                         }
-                        else if(m_virtualChessboard[indexX - j - 1][indexY + j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX - j - 1][indexY + j + 1].type() != CGobangChessman::CChessmanType::Type_None)
                         {
-                            if(m_virtualChessboard[indexX - j + 2][indexY + j - 2].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
+                            break;
                         }
                     }
                     else
@@ -335,15 +328,21 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
                         powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
                     }
                 }
-                else if(m_virtualChessboard[indexX - j][indexY + j].type() == chessmanType)
+                else if(m_virtualChessboard[indexX - j][indexY + j].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             break;
         }
@@ -351,68 +350,67 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"-"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE0_9;
-            for(int j = 1; indexX - j > -1; ++j)
+            bool ifPower = false;
+            for(int j = 1; indexX - j > -1; ++j)    //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
+                        if(indexX - j == 0)     //判断是否抵达边界
                         {
                             break;
                         }
-                        else if(m_virtualChessboard[indexX - j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX - j - 1][indexY].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
                         {
-                            if(m_virtualChessboard[indexX - j + 2][indexY].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);      //如果当前位置的反向一个单位的位置存在棋子则记录当前位置
                     }
                 }
-                else if(m_virtualChessboard[indexX - j][indexY].type() == chessmanType)
+                else if(m_virtualChessboard[indexX - j][indexY].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             powerTargets.clear();
-            powerValue = POWERVALUE0_9;
+            ifPower = false;
             for(int j = 1; indexX + j < 15; ++j)
             {
                 if(m_virtualChessboard[indexX + j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX + j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
                     {
-                        if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
+                        if(indexX + j == 14)
                         {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
                             break;
                         }
-                        else if(m_virtualChessboard[indexX + j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX + j + 1][indexY].type() != CGobangChessman::CChessmanType::Type_None)
                         {
-                            if(m_virtualChessboard[indexX + j - 2][indexY].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
+                            break;
                         }
                     }
                     else
@@ -420,15 +418,21 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
                         powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
                     }
                 }
-                else if(m_virtualChessboard[indexX + j][indexY].type() == chessmanType)
+                else if(m_virtualChessboard[indexX + j][indexY].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             break;
         }
@@ -436,68 +440,67 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"|"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE0_9;
-            for(int j = 1; indexY - j > -1; ++j)
+            bool ifPower = false;
+            for(int j = 1; indexY - j > -1; ++j)    //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
+                if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
+                        if(indexY - j == 0)     //判断是否抵达边界
                         {
                             break;
                         }
-                        else if(m_virtualChessboard[indexX][indexY - j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX][indexY - j - 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
                         {
-                            if(m_virtualChessboard[indexX][indexY - j + 2].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                            break;      //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);      //如果当前位置的反向一个单位的位置存在棋子则记录当前位置
                     }
                 }
-                else if(m_virtualChessboard[indexX][indexY - j].type() == chessmanType)
+                else if(m_virtualChessboard[indexX][indexY - j].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             powerTargets.clear();
-            powerValue = POWERVALUE0_9;
+            ifPower = false;
             for(int j = 1; indexY + j < 15; ++j)
             {
                 if(m_virtualChessboard[indexX][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
                 {
                     if(m_virtualChessboard[indexX][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
                     {
-                        if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
+                        if(indexY + j == 14)
                         {
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
                             break;
                         }
-                        else if(m_virtualChessboard[indexX][indexY + j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                        else if(m_virtualChessboard[indexX][indexY + j + 1].type() != CGobangChessman::CChessmanType::Type_None)
                         {
-                            if(m_virtualChessboard[indexX][indexY + j - 2].type() == chessmanType)
-                            {
-                                powerTargets.pop_back();
-                            }
-                            break;
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
                         }
                         else
                         {
-                            powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
+                            break;
                         }
                     }
                     else
@@ -505,15 +508,21 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
                         powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
                     }
                 }
-                else if(m_virtualChessboard[indexX][indexY + j].type() == chessmanType)
+                else if(m_virtualChessboard[indexX][indexY + j].type() != chessmanType)
                 {
-                    powerValue *= POWERVALUE0_8;
-                    break;
+                    ifPower = true;     //只有检索到对手的棋子才会进行分数计算
+                }
+                else
+                {
+                    break;      //遇到相同类型的棋子则退出
                 }
             }
-            for(int j = 0; j < powerTargets.size(); ++j)
+            if(ifPower)
             {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(POWERVALUE0_95);
+                }
             }
             break;
         }
@@ -531,97 +540,83 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"\"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE1_0;
+            double powerValue = POWERVALUE1_00;
             for(int j = 1; indexX - j > -1 && indexY - j > -1; ++j)     //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX - j][indexY - j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                if(m_virtualChessboard[indexX - j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX - j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX - j + 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX - j + 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexX - j == 0 || indexY - j == 0)      //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX - j - 1][indexY - j - 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
                         }
                         else
                         {
-                            if(indexX - j == 0 || indexX - j == 14 || indexY - j == 0 || indexY - j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY - j]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX - j][indexY - j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
             for(int j = 1; indexX + j < 15 && indexY + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX + j][indexY + j].type() == chessmanType)
+                if(m_virtualChessboard[indexX + j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX + j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX + j - 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX + j - 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexX + j == 15 || indexY + j == 15)        //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX + j + 1][indexY + j + 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
                         }
                         else
                         {
-                            if(indexX + j == 0 || indexX + j == 14 || indexY + j == 0 || indexY + j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY + j]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX + j][indexY + j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
-            powerValue -= powerTargets.size() * POWERVALUE0_1;
-            if(powerValue < 1.0)
+            powerValue -= powerTargets.size() * POWERVALUE0_05;
+            if(powerValue > 1.0)
             {
-                powerValue = 1.0;
-            }
-            for(int j = 0; j < powerTargets.size(); ++j)
-            {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(powerValue);
+                }
             }
             break;
         }
@@ -629,97 +624,83 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"/"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE1_0;
-            for(int j = 1; indexX + j < 15 && indexY - j > -1; ++j)
+            double powerValue = POWERVALUE1_00;
+            for(int j = 1; indexX + j < 15 && indexY - j > -1; ++j)     //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX + j][indexY - j].type() == chessmanType)
+                if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX + j][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX + j - 1][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX + j - 2][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexX + j == 15 || indexY - j == 0)      //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX + j + 1][indexY - j - 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
                         }
                         else
                         {
-                            if(indexX + j == 0 || indexX + j == 14 || indexY - j == 0 || indexY - j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY - j]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX + j][indexY - j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
             for(int j = 1; indexX - j > -1 && indexY + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX - j][indexY + j].type() == chessmanType)
+                if(m_virtualChessboard[indexX - j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX - j][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX - j + 1][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX - j + 2][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexX - j == 0 || indexY + j == 15)        //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX - j - 1][indexY + j + 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
                         }
                         else
                         {
-                            if(indexX - j == 0 || indexX - j == 14 || indexY + j == 0 || indexY + j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY + j]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX - j][indexY + j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
-            powerValue -= powerTargets.size() * POWERVALUE0_1;
-            if(powerValue < 1.0)
+            powerValue -= powerTargets.size() * POWERVALUE0_05;
+            if(powerValue > 1.0)
             {
-                powerValue = 1.0;
-            }
-            for(int j = 0; j < powerTargets.size(); ++j)
-            {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(powerValue);
+                }
             }
             break;
         }
@@ -727,97 +708,83 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"-"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE1_0;
-            for(int j = 1; indexX - j > -1; ++j)
+            double powerValue = POWERVALUE1_00;
+            for(int j = 1; indexX - j > -1; ++j)     //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX - j][indexY].type() == chessmanType)
+                if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX - j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX - j + 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX - j + 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexX - j == 0)      //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX - j - 1][indexY].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
                         }
                         else
                         {
-                            if(indexX - j == 0 || indexX - j == 14 || indexY == 0 || indexY == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);
+                        powerTargets.append(&m_virtualChessboard[indexX - j][indexY]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX - j][indexY].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
             for(int j = 1; indexX + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX + j][indexY].type() == chessmanType)
+                if(m_virtualChessboard[indexX + j][indexY].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX + j][indexY].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX + j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX + j - 1][indexY].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX + j - 2][indexY].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexX + j == 15)        //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX + j + 1][indexY].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
                         }
                         else
                         {
-                            if(indexX + j == 0 || indexX + j == 14 || indexY == 0 || indexY == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);
+                        powerTargets.append(&m_virtualChessboard[indexX + j][indexY]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX + j][indexY].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
-            powerValue -= powerTargets.size() * POWERVALUE0_1;
-            if(powerValue < 1.0)
+            powerValue -= powerTargets.size() * POWERVALUE0_05;
+            if(powerValue > 1.0)
             {
-                powerValue = 1.0;
-            }
-            for(int j = 0; j < powerTargets.size(); ++j)
-            {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(powerValue);
+                }
             }
             break;
         }
@@ -825,97 +792,83 @@ void CGobangChessboard::updateScore(int indexX, int indexY, CGobangChessman::CCh
         {
             //"|"
             QVector<CGobangChessman*> powerTargets;
-            double powerValue = POWERVALUE1_0;
-            for(int j = 1; indexY - j > -1; ++j)
+            double powerValue = POWERVALUE1_00;
+            for(int j = 1; indexY - j > -1; ++j)     //在棋盘范围内搜索
             {
-                if(m_virtualChessboard[indexX][indexY - j].type() == chessmanType)
+                if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX][indexY - j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX][indexY - j + 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX][indexY - j + 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexY - j == 0)      //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX][indexY - j - 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
                         }
                         else
                         {
-                            if(indexX == 0 || indexX == 14 || indexY - j == 0 || indexY - j == 14)
-                            {
-                                powerValue *= POWERVALUE0_8;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);
+                        powerTargets.append(&m_virtualChessboard[indexX][indexY - j]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX][indexY - j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
             for(int j = 1; indexY + j < 15; ++j)
             {
-                if(m_virtualChessboard[indexX][indexY + j].type() == chessmanType)
+                if(m_virtualChessboard[indexX][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置否存在棋子
                 {
-                    powerValue *= POWERVALUE1_4;
-                }
-                else if(m_virtualChessboard[indexX][indexY + j].type() == CGobangChessman::CChessmanType::Type_None)
-                {
-                    if(m_virtualChessboard[indexX][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)
+                    if(m_virtualChessboard[indexX][indexY + j - 1].type() == CGobangChessman::CChessmanType::Type_None)     //判断当前位置的反向一个单位的位置是否存在棋子
                     {
-                        if(m_virtualChessboard[indexX][indexY + j - 2].type() == CGobangChessman::CChessmanType::Type_None)
+                        if(indexY + j == 15)        //判断是否抵达边界
                         {
-                            powerTargets.pop_back();
-                            if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
-                            {
-                                powerValue *= POWERVALUE0_9;
-                            }
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
                             break;
+                        }
+                        else if(m_virtualChessboard[indexX][indexY + j + 1].type() != CGobangChessman::CChessmanType::Type_None)    //如果当前位置的正向一个单位的位置存在棋子
+                        {
+                            powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
                         }
                         else
                         {
-                            if(indexX == 0 || indexX == 14 || indexY + j == 0 || indexY + j == 14)
-                            {
-                                powerValue *= POWERVALUE0_9;
-                            }
-                            else
-                            {
-                                powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
-                            }
+                            break;  //如果当前位置的正向一个单位的位置不存在棋子
                         }
                     }
                     else
                     {
-                        powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);
+                        powerTargets.append(&m_virtualChessboard[indexX][indexY + j]);      //如果当前位置存在棋子（必定是类型一致的棋子）
                     }
+                }
+                else if(m_virtualChessboard[indexX][indexY + j].type() == chessmanType)      //如果检索的棋子与当前棋子类型一致
+                {
+                    powerValue *= POWERVALUE1_20;
                 }
                 else
                 {
+                    powerValue *= POWERVALUE0_95;
                     break;
                 }
             }
-            powerValue -= powerTargets.size() * POWERVALUE0_1;
-            if(powerValue < 1.0)
+            powerValue -= powerTargets.size() * POWERVALUE0_05;
+            if(powerValue > 1.0)
             {
-                powerValue = 1.0;
-            }
-            for(int j = 0; j < powerTargets.size(); ++j)
-            {
-                powerTargets[j]->powerScore(powerValue);
+                for(int j = 0; j < powerTargets.size(); ++j)
+                {
+                    powerTargets[j]->powerScore(powerValue);
+                }
             }
             break;
         }
@@ -1166,7 +1119,7 @@ void CGobangChessboard::mouseReleaseEvent(QMouseEvent *mouseReleaseEvent)
     }
     if(m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].isEmpty())
     {
-        qDebug() << "Black:" << m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].score();
+//        qDebug() << "Black:" << m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].score();
         this->paintChessman(newChessboardPositionIndexX, newChessboardPositionIndexY, CGobangChessman::CChessmanType::Type_Black);
         m_virtualChessboard[newChessboardPositionIndexX][newChessboardPositionIndexY].setChessman(CGobangChessman::CChessmanType::Type_Black);
         m_playerChessmanType = CGobangChessman::CChessmanType::Type_White;
