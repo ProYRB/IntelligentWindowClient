@@ -25,6 +25,7 @@ SOURCES += \
     cloginwindow.cpp \
     cmodifypassworddialog.cpp \
     cmodifysecretivequestionsdialog.cpp \
+    cpainter.cpp \
     cproductinformationdialog.cpp \
     cregisterdialog.cpp \
     cretrievedialog.cpp \
@@ -40,6 +41,7 @@ HEADERS += \
     cmainwindow.h \
     cmodifypassworddialog.h \
     cmodifysecretivequestionsdialog.h \
+    cpainter.h \
     cproductinformationdialog.h \
     cregisterdialog.h \
     cretrievedialog.h \

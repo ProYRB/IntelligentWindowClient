@@ -32,6 +32,8 @@
 #define POWERVALUE1_15 1.15
 #define POWERVALUE1_20 1.20
 
+#define INITIALADDSCORE 1.0
+
 class CGobangChessboard : public QLabel
 {
     Q_OBJECT
@@ -49,6 +51,7 @@ signals:
 public:
     explicit CGobangChessboard(QWidget *parent = nullptr);
 
+    void addScoreInitially(double score);
     void restart();
 
 protected:
@@ -66,18 +69,17 @@ private:
     QVector<QImage*> m_vectorPlayImagesHistory;
 
     CGobangChessman **m_virtualChessboard = nullptr;
-    CGobangChessman::CChessmanType m_playerChessmanType = CGobangChessman::CChessmanType::Type_Black;
+    CGobangChessman::CChessmanType m_playerChessmanType = CGobangChessman::CChessmanType::Chessman_Black;
 
 private slots:
     void ai();
-    void updateScore(int indexX, int indexY, CGobangChessman::CChessmanType type);
     void checkWin(const int indexX, const int indexY, const CGobangChessman::CChessmanType type);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void paintChessboard();
-    void paintPredictor();
-
     bool paintChessman(int indexX, int indexY, CGobangChessman::CChessmanType chessmanType);
+    void paintPredictor();
+    void updateScore(int indexX, int indexY, CGobangChessman::CChessmanType type);
 
 };
 

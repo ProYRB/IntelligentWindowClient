@@ -19,9 +19,16 @@ signals:
 public:
     enum CChessmanType
     {
-        Type_Black,
-        Type_None,
-        Type_White,
+        Chessman_Black,
+        Chessman_None,
+        Chessman_White,
+    };
+    enum CDirectionType
+    {
+        Direction_Backslash,
+        Direction_Slash,
+        Direction_Horizontal,
+        Direction_Vertical,
     };
 
     explicit CGobangChessman();
@@ -30,6 +37,7 @@ public:
     void addScore(int score);
     bool isEmpty();
     bool powerScore(double power);
+    bool powerScore(CDirectionType directionType, double power);
     void restart();
     double score();
     bool setChessman(CChessmanType type);
@@ -40,7 +48,10 @@ protected:
 
 private:
     bool m_isEmpty;         //是否落子
-    double m_score;         //棋子初始化分数
+    double m_backslash;     //反斜杠方向的分数
+    double m_slash;         //斜杠方向的分数
+    double m_horizontal;    //斜杠方向的分数
+    double m_vertical;      //斜杠方向的分数
 
     CChessmanType m_type;   //棋子类型
 
